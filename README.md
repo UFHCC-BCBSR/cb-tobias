@@ -27,7 +27,7 @@ git clone https://github.com/UFHCC-BCBSR/cb-tobias.git my_tobias_project
 cd my_tobias_project
 
 # 2. Edit configuration files (see [Configuration Files](#configuration-files))
-nano run_tobias.sbatch            # Update PIPELINE_DIR, account, email
+nano run_tobias.sbatch            # Update PIPELINE_DIR, account, email, and path/to/env
 nano contrast1-config.yaml        # Rename and update with your data paths (do this for each config, create more as needed)
 nano config-names.txt             # List your {config-names} from  {config-name}-config.yaml. config file names must follow this naming syntax.
 
@@ -150,7 +150,7 @@ PIPELINE_DIR='/blue/YOUR_GROUP/pipelines/TOBIAS_snakemake'  # UPDATE THIS
 #SBATCH --mail-user=YOUR_EMAIL@ufl.edu        # UPDATE THIS
 #SBATCH --account=YOUR_ACCOUNT                 # UPDATE THIS (e.g., cancercenter-dept)
 #SBATCH --qos=YOUR_QOS                         # UPDATE THIS (e.g., cancercenter-dept-b)
-#SBATCH --array=1-N                            # UPDATE N to match lines in samples.txt
+#SBATCH --array=1-N                            # UPDATE N to match lines in config-names.txt
 ```
 
 **Resource settings:**
@@ -220,12 +220,12 @@ PIPELINE_DIR='/blue/cancercenter-dept/pipelines/TOBIAS_snakemake'  # Your pipeli
 #### B. Create Config Files
 
 ```bash
-# Rename example configs
-mv config_sample1.yaml config_treatment1_vs_control_config.yaml
-mv config_sample2.yaml config_treatment2_vs_control_config.yaml
+# Rename example configs and add more as needed
+mv contrast1-config.yaml group1_vs_group2-config.yaml
+mv contrast2-config.yaml group3_vs_group4-config.yaml
 
 # Edit first config
-nano config_treatment1_vs_control_config.yaml
+nano group1_vs_group2-config.yaml
 ```
 
 Update paths in each config:
@@ -233,12 +233,12 @@ Update paths in each config:
 - `fasta:`, `blacklist:`, `gtf:`, `motifs:` with appropriate paths
 - `output:` with desired output directory name
 
-#### C. Create samples.txt
+#### C. Create config-names.txt
 
 ```bash
-cat > samples.txt << EOF
-treatment1_vs_control
-treatment2_vs_control
+cat > config-names.txt << EOF
+group1_vs_group2
+group3_vs_group4
 EOF
 ```
 
@@ -247,6 +247,7 @@ EOF
 ### Step 4: Submit Job
 
 ```bash
+sbatch run-tobias.sbatch
 ```
 
 ---
@@ -274,8 +275,8 @@ tail -f logs/tobias.JOBID_1.out  # Replace JOBID with actual job ID
 Results will be in directories specified by the `output:` field in each config:
 
 ```bash
-ls results/treatment1_vs_control_output/
-ls results/treatment2_vs_control_output/
+ls results/group1_vs_group2_output/
+ls results/group3_vs_group4_output/
 ```
 
 ---
@@ -290,7 +291,7 @@ Job arrays allow parallel processing of multiple samples efficiently.
 #SBATCH --array=1-3  # Creates 3 parallel jobs
 ```
 
-If samples.txt contains:
+If config-names.txt contains:
 ```
 sample_A
 sample_B
@@ -302,7 +303,7 @@ Then:
 - Array task 2 processes `config_sample_B_config.yaml`
 - Array task 3 processes `config_sample_C_config.yaml`
 
-**Important:** The `--array` range must match the number of lines in samples.txt!
+**Important:** The `--array` range must match the number of lines in config-names.txt!
 
 ---
 
@@ -317,7 +318,7 @@ FileNotFoundError: [Errno 2] No such file or directory: 'sample1_config.yaml'
 
 **Solution:**
 - Config files must be named: `config_{name}_config.yaml`
-- If samples.txt has `sample1`, you need `config_sample1_config.yaml`
+- If config-names.txt has `sample1`, you need `config_sample1_config.yaml`
 
 ---
 
@@ -341,10 +342,10 @@ PIPELINE_DIR='/blue/YOUR_GROUP/pipelines/TOBIAS_snakemake'
 **Error:** Some array tasks fail immediately with empty output
 
 **Solution:**
-Ensure `--array=1-N` where N = number of lines in samples.txt:
+Ensure `--array=1-N` where N = number of lines in config-names.txt:
 ```bash
 # Count lines
-wc -l samples.txt
+wc -l config-names.txt
 
 # Update array in run_tobias.sbatch
 #SBATCH --array=1-N  # Replace N with your count
@@ -409,7 +410,7 @@ All projects share the same centrally installed TOBIAS pipeline.
 
 **Files tracked in git:**
 - Configuration files (*.yaml)
-- samples.txt
+- config-names.txt
 - run_tobias.sbatch (your modifications)
 - README.md
 
@@ -421,7 +422,7 @@ All projects share the same centrally installed TOBIAS pipeline.
 
 To save your project configuration:
 ```bash
-git add config_*.yaml samples.txt run_tobias.sbatch
+git add config_*.yaml config-names.txt run_tobias.sbatch
 git commit -m "Analysis configuration for PROJECT_NAME"
 git push
 ```
