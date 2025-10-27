@@ -15,7 +15,7 @@ git clone https://github.com/loosolab/TOBIAS_snakemake.git
 # Set up conda environment
 ml conda
 cd TOBIAS_snakemake
-conda env create -f environments/tobias_snakemake.yaml -n tobias_snakemake_env
+conda env create -f environments/tobias_snakemake.yaml --prefix /blue/YOUR_GROUP/YOUR_USERNAME/conda_envs/tobias_snakemake_env
 ```
 
 ## Quick Start for New Project
@@ -26,16 +26,16 @@ cd /blue/YOUR_GROUP/YOUR_USERNAME/
 git clone https://github.com/UFHCC-BCBSR/cb-tobias.git my_tobias_project
 cd my_tobias_project
 
-# 2. Edit configuration files
-nano run_tobias.sh              # Update PIPELINE_DIR, account, email
-nano config_sample1.yaml        # Update with your data paths
-nano samples.txt                # List your samples
+# 2. Edit configuration files (see [Configuration Files](#configuration-files))
+nano run_tobias.sbatch            # Update PIPELINE_DIR, account, email
+nano contrast1-config.yaml        # Rename and update with your data paths (do this for each config, create more as needed)
+nano config-names.txt             # List your {config-names} from  {config-name}-config.yaml. config file names must follow this naming syntax.
 
-# 3. Create LOGS directory
-mkdir -p LOGS
+# 3. Create logs directory for SLURM logs
+mkdir -p logs
 
 # 4. Submit
-sbatch run_tobias.sh
+sbatch run_tobias.sbatch
 ```
 
 ## Repository Structure
@@ -43,10 +43,10 @@ sbatch run_tobias.sh
 ```
 cb-tobias/                         # This template repo
 ├── README.md                      # This file
-├── config_sample1.yaml            # Example config file
-├── config_sample2.yaml            # Example config file
-├── samples.txt                    # Example samples list
-├── run_tobias.sh                  # SLURM submission script
+├── contrast1-config.yaml          # Example config file
+├── contrast2-config.yaml          # Example config file
+├── config-names.txt               # Example config files list
+├── run_tobias.sbatch              # SLURM submission script
 └── .gitignore                     # Ignore logs and results
 ```
 
@@ -54,16 +54,16 @@ cb-tobias/                         # This template repo
 
 ```
 my_tobias_project/
-├── config_treatment1_vs_ctrl.yaml  # Your comparison configs
-├── config_treatment2_vs_ctrl.yaml
-├── samples.txt                     # Your samples list
-├── run_tobias.sh                   # Modified SLURM script
-├── LOGS/                           # SLURM logs (create this)
+├── group1_vs_group2-config.yaml    # Your comparison configs
+├── group3_vs_group4-config.yaml
+├── config-names.txt                # Your comparison list (one line per config file)
+├── run_tobias.sbatch               # Modified SLURM script
+├── logs/                           # SLURM logs (create this)
 │   ├── tobias.123456_1.out
 │   └── tobias.123456_1.err
 ├── results/                        # Analysis outputs (auto-created)
-│   ├── treatment1_vs_ctrl_output/
-│   └── treatment2_vs_ctrl_output/
+│   ├── group1_vs_group2_output/
+│   └── group3_vs_group4_output/
 └── README.md
 ```
 
@@ -79,34 +79,28 @@ my_tobias_project/
 
 ## Configuration Files
 
-### 1. samples.txt
+### 1. config-names.txt
 
-Plain text file with one sample name per line. Each line corresponds to a config file.
+Plain text file with one run/config per line. Each line corresponds to a config file.
 
 **Format:**
 ```
-sample_name1
-sample_name2
-sample_name3
+group1_vs_group2
+group3_vs_group4
 ```
 
-**Example:**
-```
-treatment1_vs_ctrl
-treatment2_vs_ctrl
-```
 
-**Important:** If your samples.txt contains `treatment1_vs_ctrl`, you must have a file named `config_treatment1_vs_ctrl_config.yaml`.
+**Important:** If your config-names.txt contains `group1_vs_group2`, you must have a file named EXACTLY `group1_vs_group2-config.yaml`.
 
 ---
 
-### 2. config_{sample}_config.yaml
+### 2. {config-name}-config.yaml
 
-YAML configuration file for each comparison. Rename the example configs and edit with your data.
+YAML configuration file for each run. Rename the example configs and edit with your data.
 
 **Naming convention:**
-- samples.txt line: `treatment1_vs_ctrl`
-- Config filename: `config_treatment1_vs_ctrl_config.yaml`
+- config-names.txt line: `group1_vs_group2`
+- Config filename:  `group1_vs_group2-config.yaml`
 
 **Key sections:**
 
@@ -121,7 +115,7 @@ run_info:
   blacklist: /path/to/blacklist.bed           # Blacklist regions BED file
   gtf: /path/to/annotation.gtf                # Gene annotation GTF
   motifs: /path/to/motifs/*                   # Motif database files
-  output: treatment1_vs_ctrl_output           # Output directory name
+  output: group1_vs_group2_output           # Output directory name
 
 flags:
   plot_comparison: True
@@ -131,7 +125,7 @@ flags:
   wilson: True
 ```
 
-**Common HiPerGator resource paths:**
+**Example HiPerGator resource paths:**
 - **Genomes:** `/orange/cancercenter-dept/GENOMES/iGenomes/references/`
   - Example: `/orange/cancercenter-dept/GENOMES/iGenomes/references/Homo_sapiens/Ensembl/GRCh38/Sequence/WholeGenomeFasta/genome.fa`
 - **Blacklists:** `/orange/cancercenter-dept/resources/BLACKLISTS/`
@@ -142,7 +136,7 @@ flags:
 
 ---
 
-### 3. run_tobias.sh
+### 3. run_tobias.sbatch
 
 SLURM batch script that submits your analysis as a job array.
 
@@ -166,7 +160,7 @@ PIPELINE_DIR='/blue/YOUR_GROUP/pipelines/TOBIAS_snakemake'  # UPDATE THIS
 - `--cores 8` in snakemake command must match `--cpus-per-task`
 
 **How it works:**
-1. Each array task reads one line from samples.txt
+1. Each array task reads one line from config-names.txt
 2. Finds the corresponding config file
 3. Runs Snakemake with that config
 4. All jobs run in parallel
@@ -185,7 +179,8 @@ git clone https://github.com/loosolab/TOBIAS_snakemake.git
 # Create conda environment
 ml conda
 cd TOBIAS_snakemake
-conda env create -f environments/tobias_snakemake.yaml -n tobias_snakemake_env
+# Instead of -n (name), use --prefix (path) to install the environment in a shared location and/or with more space than default ~
+conda env create -f environments/tobias_snakemake.yaml --prefix /blue/YOUR_GROUP/YOUR_USERNAME/conda_envs/tobias_snakemake_env
 cd ..
 ```
 
@@ -196,21 +191,21 @@ cd ..
 ```bash
 # Clone this template
 cd /blue/YOUR_GROUP/YOUR_USERNAME/projects/
-git clone https://github.com/UFHCC-BCBSR/cb-tobias.git my_atac_analysis
-cd my_atac_analysis
+git clone https://github.com/UFHCC-BCBSR/cb-tobias.git my_tobias_analysis
+cd my_tobias_analysis
 
-# Create LOGS directory
-mkdir -p LOGS
+# Create logs directory
+mkdir -p logs
 ```
 
 ---
 
 ### Step 3: Configure Analysis
 
-#### A. Update run_tobias.sh
+#### A. Update run_tobias.sbatch
 
 ```bash
-nano run_tobias.sh
+nano run_tobias.sbatch
 ```
 
 Update these lines:
@@ -252,7 +247,6 @@ EOF
 ### Step 4: Submit Job
 
 ```bash
-sbatch run_tobias.sh
 ```
 
 ---
@@ -264,13 +258,13 @@ sbatch run_tobias.sh
 squeue -u $USER
 
 # View output logs in real-time
-tail -f LOGS/tobias.*.out
+tail -f logs/tobias.*.out
 
 # Check for errors
-tail -f LOGS/tobias.*.err
+tail -f logs/tobias.*.err
 
 # Check specific array task
-tail -f LOGS/tobias.JOBID_1.out  # Replace JOBID with actual job ID
+tail -f logs/tobias.JOBID_1.out  # Replace JOBID with actual job ID
 ```
 
 ---
@@ -335,7 +329,7 @@ WorkflowError: Snakefile not found
 ```
 
 **Solution:**
-Update `PIPELINE_DIR` in run_tobias.sh to point to your TOBIAS_snakemake installation:
+Update `PIPELINE_DIR` in run_tobias.sbatch to point to your TOBIAS_snakemake installation:
 ```bash
 PIPELINE_DIR='/blue/YOUR_GROUP/pipelines/TOBIAS_snakemake'
 ```
@@ -352,7 +346,7 @@ Ensure `--array=1-N` where N = number of lines in samples.txt:
 # Count lines
 wc -l samples.txt
 
-# Update array in run_tobias.sh
+# Update array in run_tobias.sbatch
 #SBATCH --array=1-N  # Replace N with your count
 ```
 
@@ -363,7 +357,7 @@ wc -l samples.txt
 **Error:** Job killed, logs show `oom-kill` or memory errors
 
 **Solution:**
-Increase memory in run_tobias.sh:
+Increase memory in run_tobias.sbatch:
 ```bash
 #SBATCH --mem=48Gb  # or 64Gb, 96Gb
 ```
@@ -382,7 +376,7 @@ Create the environment:
 ```bash
 ml conda
 cd /blue/YOUR_GROUP/pipelines/TOBIAS_snakemake
-conda env create -f environments/tobias_snakemake.yaml -n tobias_snakemake_env
+conda env create -f environments/tobias_snakemake.yaml --prefix /blue/YOUR_GROUP/YOUR_USERNAME/conda_envs/tobias_snakemake_env
 ```
 
 ---
@@ -416,18 +410,18 @@ All projects share the same centrally installed TOBIAS pipeline.
 **Files tracked in git:**
 - Configuration files (*.yaml)
 - samples.txt
-- run_tobias.sh (your modifications)
+- run_tobias.sbatch (your modifications)
 - README.md
 
 **Files ignored (.gitignore):**
-- LOGS/ (SLURM logs)
+- logs/ (SLURM logs)
 - results/ (analysis output)
 - *.bam, *.bai (data files)
 - *_output/ (output directories)
 
 To save your project configuration:
 ```bash
-git add config_*.yaml samples.txt run_tobias.sh
+git add config_*.yaml samples.txt run_tobias.sbatch
 git commit -m "Analysis configuration for PROJECT_NAME"
 git push
 ```
@@ -451,7 +445,7 @@ All projects will automatically use the updated version on their next run.
 
 1. **Test with one sample first:** Set `--array=1-1` to test your configuration
 2. **Use descriptive names:** Name configs clearly (e.g., `H3K27ac_treat_vs_ctrl`)
-3. **Check logs:** Always check LOGS/ for errors before assuming success
+3. **Check logs:** Always check logs/ for errors before assuming success
 4. **Dry run:** Test Snakemake with `--dryrun` flag first
 5. **Resource estimation:** Small datasets (~10M reads) work with default resources; larger datasets may need more memory/time
 
