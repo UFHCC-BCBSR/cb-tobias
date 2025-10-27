@@ -17,6 +17,26 @@ conda env create -f environments/tobias_snakemake.yaml
     --prefix /blue/YOUR_GROUP/YOUR_USERNAME/conda_envs/tobias_snakemake_env
 ```
 
+### Motif Database Setup (One-Time)
+
+Motif files are reference data and should be stored in a central shared location, not copied per project.
+
+**Download JASPAR for your group:**
+```bash
+# Download once to shared location
+mkdir -p /blue/YOUR_GROUP/resources/JASPAR
+cd /blue/YOUR_GROUP/resources/JASPAR
+
+# Download from JASPAR (example: vertebrates)
+wget https://jaspar.genereg.net/download/data/2024/CORE/JASPAR2024_CORE_vertebrates_non-redundant_pfms_jaspar.zip
+unzip JASPAR2024_CORE_vertebrates_non-redundant_pfms_jaspar.zip
+
+# Then reference in all your configs:
+motifs: /blue/YOUR_GROUP/resources/JASPAR/*
+```
+
+**For testing only:** Copy a small subset to your project directory (see example configs).
+
 ## Usage: Running an Analysis
 
 ### 1. Clone This Template
