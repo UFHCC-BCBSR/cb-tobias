@@ -1,0 +1,118 @@
+#=============================================================================
+# TOBIAS Configuration File
+#=============================================================================
+# This file configures a single TOBIAS analysis comparing two conditions.
+# Rename this file to: config_{sample_name}_config.yaml
+# Example: config_treatment_vs_control_config.yaml
+
+#-----------------------------------------------------------------------------
+# INPUT DATA: ATAC-seq BAM Files
+#-----------------------------------------------------------------------------
+# Specify BAM files for each condition to compare
+# - Use descriptive condition names (e.g., treatment, control, timepoint1)
+# - Multiple BAM files per condition can be listed as: [file1.bam, file2.bam]
+# - BAM files must be coordinate-sorted and indexed (.bai files in same directory)
+
+data:
+  condition1: [/path/to/condition1.sorted.bam]
+  condition2: [/path/to/condition2.sorted.bam]
+
+#-----------------------------------------------------------------------------
+# RUN INFORMATION: Reference Files and Output
+#-----------------------------------------------------------------------------
+
+run_info:
+  # Organism: Used by MACS2 for genome size parameter
+  # Options: human, mouse, zebrafish
+  # (Alternatively, manually set genome size in 'macs:' parameters below)
+  organism: human
+
+  # Reference genome FASTA file
+  # MUST be uncompressed (.fa) or bgzip compressed (compatible with samtools)
+  # Common location: /orange/cancercenter-dept/GENOMES/iGenomes/references/
+  # Example: /orange/cancercenter-dept/GENOMES/iGenomes/references/Homo_sapiens/Ensembl/GRCh38/Sequence/WholeGenomeFasta/genome.fa
+  fasta: /path/to/reference_genome.fa
+
+  # Blacklist regions BED file
+  # Excludes problematic genomic regions from analysis
+  # Common location: /orange/cancercenter-dept/resources/BLACKLISTS/
+  # Available: hg38-blacklist.v2.bed, hg19-blacklist.v2.bed, mm10-blacklist.v2.bed
+  blacklist: /path/to/blacklist.bed
+
+  # Gene annotation GTF file
+  # Used for peak annotation
+  # MUST be uncompressed (.gtf)
+  # Common location: /orange/cancercenter-dept/GENOMES/iGenomes/references/
+  # Example: /orange/cancercenter-dept/GENOMES/iGenomes/references/Homo_sapiens/Ensembl/GRCh38/Annotation/Genes/genes.gtf
+  gtf: /path/to/annotation.gtf
+
+  # Transcription factor motif database
+  # Can be a directory with wildcard (e.g., /path/to/motifs/*)
+  # Or specific files in MEME, JASPAR, or PFM format
+  # Download JASPAR: https://jaspar.genereg.net/downloads/
+  motifs: /path/to/motifs/*
+
+  # Output directory name
+  # Results will be created in: ./results/{output_name}/
+  # Use descriptive names matching your comparison
+  # Example: treatment1_vs_control_output
+  output: analysis_output
+
+  # Optional: Pre-calculated peaks (uncomment to use)
+  # If you have pre-called peaks from another tool (e.g., MACS2), specify here
+  #peaks: /path/to/merged_peaks_annotated.bed
+  #peaks_header: /path/to/merged_peaks_header.txt
+
+#-----------------------------------------------------------------------------
+# ANALYSIS FLAGS: Enable/Disable Pipeline Steps
+#-----------------------------------------------------------------------------
+# Set to True to include, False to skip
+# All steps are True by default
+
+flags:
+  plot_comparison: True    # Generate comparison plots between conditions
+  plot_correction: True    # Generate ATACorrect bias correction plots
+  plot_venn: True         # Generate Venn diagrams of overlapping sites
+  coverage: True          # Calculate coverage tracks
+  wilson: True            # Use Wilson confidence intervals for statistics
+
+#-----------------------------------------------------------------------------
+# MODULE PARAMETERS (Advanced Settings)
+#-----------------------------------------------------------------------------
+# Custom parameters for individual TOBIAS modules
+# Leave empty ("") to use defaults
+
+# MACS2 peak calling parameters
+# Default ATAC-seq settings shown below
+# --nomodel: Do not build shifting model
+# --shift -100 --extsize 200: Adjust for Tn5 insertion
+# --broad: Call broad peaks
+macs: "--nomodel --shift -100 --extsize 200 --broad"
+
+# ATACorrect: Bias correction parameters
+# Leave empty for defaults
+atacorrect: ""
+
+# Footprinting: Footprint scoring parameters
+# Leave empty for defaults
+footprinting: ""
+
+# BINDetect: Differential binding detection parameters
+# Leave empty for defaults
+bindetect: ""
+
+#=============================================================================
+# NOTES:
+#=============================================================================
+# 1. This config file name must match your samples.txt entry
+#    samples.txt line: "treatment_vs_control"
+#    Config filename: "config_treatment_vs_control_config.yaml"
+#
+# 2. All paths can be absolute or relative to where you run the pipeline
+#
+# 3. For HiPerGator users:
+#    - Use /blue/ for your data and outputs (read-write)
+#    - Use /orange/ for reference genomes (read-only, shared resources)
+#
+# 4. Test your config on a small dataset first before running full analysis
+#=============================================================================
