@@ -29,20 +29,17 @@ run_info:
 
   # Reference genome FASTA file
   # MUST be uncompressed (.fa) or bgzip compressed (compatible with samtools)
-  # Common location: /orange/cancercenter-dept/GENOMES/iGenomes/references/
   # Example: /orange/cancercenter-dept/GENOMES/iGenomes/references/Homo_sapiens/Ensembl/GRCh38/Sequence/WholeGenomeFasta/genome.fa
   fasta: /path/to/reference_genome.fa
 
   # Blacklist regions BED file
   # Excludes problematic genomic regions from analysis
-  # Common location: /orange/cancercenter-dept/resources/BLACKLISTS/
   # Available: hg38-blacklist.v2.bed, hg19-blacklist.v2.bed, mm10-blacklist.v2.bed
   blacklist: /path/to/blacklist.bed
 
   # Gene annotation GTF file
   # Used for peak annotation
   # MUST be uncompressed (.gtf)
-  # Common location: /orange/cancercenter-dept/GENOMES/iGenomes/references/
   # Example: /orange/cancercenter-dept/GENOMES/iGenomes/references/Homo_sapiens/Ensembl/GRCh38/Annotation/Genes/genes.gtf
   gtf: /path/to/annotation.gtf
 
